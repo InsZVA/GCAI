@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GoogleCamp AI对战测试系统 Alpha</title>
+</head>
+<body>
+    <p>请登录：</p>
+    <p><label for="username">用户名：</label><input id="username"></p>
+    <p><label for="password">密码：</label><input id="password"></p>
+    <p><a href="#" onclick="login()">登录</a></p>
+
+    <script>
+        function login() {
+            var data = {};
+            data.username = document.getElementById("username").value;
+            data.password = document.getElementById("password").value;
+            fetch("/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }).then(function(res) {
+                if (res.ok) {
+                    alert(res)
+                }
+            })
+        }
+    </script>
+</body>
+</html>
