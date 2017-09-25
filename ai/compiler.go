@@ -26,3 +26,7 @@ func init() {
 	defaultWorker.tasks = make(chan *Task, 128)
 	defaultWorker.Start()
 }
+
+func AddTask(task *Task) {
+	defaultWorker.tasks <- task
+}

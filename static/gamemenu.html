@@ -32,6 +32,8 @@
                 document.getElementById("gamelist").innerHTML = html;
             } else if (data.code == 1003) {
                 location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
             }
         })
     </script>

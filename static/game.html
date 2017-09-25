@@ -27,7 +27,7 @@
         <h5> RANK:<span id="rank"></span></h5>
         <h5>当前AI:<span id="currentai"></span></h5>
         <ul>
-            <li><a href="aimanager.html?gid=">AI管理</a></li>
+            <li><a id="aimanager" href="aimanager.html?gid=">AI管理</a></li>
         </ul>
     </div>
     <script>
@@ -53,6 +53,8 @@
             }
         }
         var request = new UrlSearch();
+
+        document.getElementById("aimanager").href = "aimanager.html?gid=" + request.id;
 
         fetch("/game?token=" + localStorage.getItem("token") + "&id=" + request.id, {
             method: "GET",
@@ -80,6 +82,8 @@
                 document.getElementById("space_limit").innerHTML = data.body.space_limit;
             } else if (data.code == 1003) {
                 location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
             }
         });
 
@@ -99,6 +103,8 @@
                 document.getElementById("currentai").innerHTML = data.body.current_ai_name;
             } else if (data.code == 1003) {
                 location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
             }
         });
     </script>

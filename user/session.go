@@ -9,9 +9,9 @@ import (
 )
 
 type SessionValue struct {
-	userId int
-	level int
-	updateTime time.Time
+	UserId     int
+	Level      int
+	UpdateTime time.Time
 }
 
 var sessions = make(map[string]SessionValue)
@@ -33,8 +33,8 @@ retry:
 	}
 
 	sessions[token] = SessionValue{
-		userId: userId,
-		updateTime: time.Now(),
+		UserId:     userId,
+		UpdateTime: time.Now(),
 	}
 	return token
 }
@@ -45,8 +45,8 @@ func GetSession(token string) (SessionValue, error) {
 
 	if sessionValue, ok := sessions[token]; ok {
 		now := time.Now()
-		if sessionValue.updateTime.Add(3600 * time.Second).After(now) {
-			sessionValue.updateTime = now
+		if sessionValue.UpdateTime.Add(3600 * time.Second).After(now) {
+			sessionValue.UpdateTime = now
 			sessions[token] = sessionValue
 			return sessionValue, nil
 		}
@@ -62,7 +62,7 @@ func cleanSession() {
 
 	for i := 0; i < 100; i++ {
 		for k, v := range sessions {
-			if v.updateTime.Add(3600 * time.Second).Before(time.Now()) {
+			if v.UpdateTime.Add(3600 * time.Second).Before(time.Now()) {
 				delete(sessions, k)
 				continue
 			}

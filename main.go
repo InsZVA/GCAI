@@ -5,6 +5,7 @@ import (
 	_"github.com/inszva/GCAI/res"
 	_"github.com/inszva/GCAI/user"
 	_"github.com/inszva/GCAI/game"
+	_"github.com/inszva/GCAI/ai"
 )
 
 func main() {

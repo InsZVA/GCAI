@@ -4,8 +4,9 @@ import (
 	"github.com/inszva/GCAI/httputil"
 	"github.com/inszva/GCAI/dbutil"
 	"strconv"
-	"github.com/inszva/GCAI/ai"
 	"net/http"
+	"github.com/hashicorp/golang-lru"
+	"log"
 )
 
 type InfoBody struct {
@@ -20,6 +21,40 @@ type InfoResponse struct {
 	Body InfoBody `json:"body"`
 }
 
+
+var aiNameCache *lru.Cache
+
+func init() {
+	var err error
+	aiNameCache, err = lru.New(1024)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func GetAIName(id int) (string, error) {
+	var aiNameStr string
+	aiName, ok := aiNameCache.Get(id)
+	if !ok {
+		db, err := dbutil.Open()
+		if err != nil {
+			return "", err
+		}
+		rows, err := db.Query("SELECT ai_name FROM ai WHERE ai_id=?", id)
+		if err != nil {
+			return "", err
+		}
+		if rows.Next() {
+			rows.Scan(&aiNameStr)
+			aiNameCache.Add(id, aiNameStr)
+			return aiNameStr, nil
+		}
+		return "Null", nil
+	}
+	return aiName.(string), nil
+}
+
+
 func init() {
 	infoHanlder := httputil.JsonHandler{
 		Serve: make(map[string]func (map[string][]string) interface{}),
@@ -27,7 +62,7 @@ func init() {
 
 	infoHanlder.Serve["GET"] = NewAuthHandleFunc([]int{0},
 		func (session SessionValue, params map[string][]string) interface{} {
-		userId := session.userId
+		userId := session.UserId
 		gids, ok := params["gid"]
 		if !ok {
 			return httputil.BadResponse(2001)
@@ -53,7 +88,7 @@ func init() {
 		var rank, currentAIId int
 		if rows.Next() {
 			rows.Scan(&rank, &currentAIId)
-			aiInfo, err := ai.GetAIInfo(currentAIId)
+			aiName, err := GetAIName(currentAIId)
 			if err != nil {
 				return httputil.BadResponse(9001)
 			}
@@ -66,7 +101,7 @@ func init() {
 					Username: username,
 					Rank: rank,
 					CurrentAIId: currentAIId,
-					CurrentAIName: aiInfo.AIName,
+					CurrentAIName: aiName,
 				},
 			}
 		} else {

@@ -14,7 +14,7 @@ func NewAuthHandleFunc(level []int, serve func (SessionValue, map[string][]strin
 				return httputil.BadResponse(1003)
 			}
 			for _, l := range level {
-				if l == session.level {
+				if l == session.Level {
 					return serve(session, params)
 				}
 			}

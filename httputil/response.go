@@ -10,6 +10,10 @@ func init() {
 
 	codeToMessage[2001] = "game id error"
 
+	codeToMessage[3001] = "ai id error"
+	codeToMessage[3002] = "an ai is compiling"
+	codeToMessage[3003] = "ai detail missing"
+
 	codeToMessage[9001] = "dbutil error"
 }
 
@@ -28,5 +32,12 @@ func BadResponse(code int) JsonResponse {
 	return JsonResponse{
 		Code: code,
 		Msg: "unkown error",
+	}
+}
+
+func OKResponse() JsonResponse {
+	return JsonResponse{
+		Code: 0,
+		Msg: "ok",
 	}
 }

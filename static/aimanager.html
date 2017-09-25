@@ -3,8 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <title>AI管理</title>
+
+    <style>
+        .fl {
+            float: left;
+        }
+
+        .clbt {
+            clear: both;
+        }
+    </style>
 </head>
 <body>
+    <div class="fl" style="width: 80%">
+        <ul id="ailist">
+            <li></li>
+        </ul>
 
+        <h4>新建AI</h4>
+        <p><input id="ainame" placeholder="AI名"></p>
+        <p><select id="language">
+            <option value="go">Go</option>
+            <option value="cpp">C/C++</option>
+        </select></p>
+        <p><textarea id="source"></textarea></p>
+        <p><span href="#" onclick="newAI()">新建</span></p>
+    </div>
+    <div class="fl" style="width: 20%">
+        <h4 id="username"></h4>
+        <h5> RANK:<span id="rank"></span></h5>
+        <h5>当前AI:<span id="currentai"></span></h5>
+        <ul>
+            <li><a id="aimanager" href="aimanager.html?gid=">AI管理</a></li>
+        </ul>
+    </div>
+
+    <script>
+        if (localStorage.getItem("token") === null) {
+            location.replace("index.html")
+        }
+
+        function UrlSearch()
+        {
+            var name,value;
+            var str = location.href;
+            var num = str.indexOf("?");
+            str = str.substr(num+1);
+
+            var arr = str.split("&");
+            for(var i = 0;i < arr.length;i++){
+                num = arr[i].indexOf("=");
+                if(num > 0){
+                    name = arr[i].substring(0,num);
+                    value = arr[i].substr(num+1);
+                    this[name] = value;
+                }
+            }
+        }
+        var request = new UrlSearch();
+
+        fetch("/ai?token=" + localStorage.getItem("token") + "&gid=" + request.gid, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function(res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function(data) {
+            if (data.code == 0) {
+                var html = "\n";
+                for (var i = 0; i < data.body.length; i++) {
+                    html += "<li>";
+                    html += data.body[i].ai_name + "&nbsp;";
+                    switch (data.body[i].state) {
+                        case 0:
+                            html += "正在创建"; break;
+                        case 1:
+                            html += "就绪"; break;
+                        case 2:
+                            html += "编译失败";
+                    }
+                    html += "&nbsp;" + data.body[i].language;
+                    var date = new Date();
+                    date.setTime(data.body[i].update_time * 1000);
+                    html += "&nbsp;" + date.toDateString() + "</li>\n";
+                }
+                document.getElementById("ailist").innerHTML = html;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
+            }
+        });
+
+        fetch("/user?token=" + localStorage.getItem("token") + "&gid=" + request.gid, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function(res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function(data) {
+            if (data.code == 0) {
+                document.getElementById("username").innerHTML = data.body.username;
+                document.getElementById("rank").innerHTML = data.body.rank;
+                document.getElementById("currentai").innerHTML = data.body.current_ai_name;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
+            }
+        });
+
+        function newAI() {
+            var data = {
+                token: localStorage.getItem("token"),
+                game_id: request.gid,
+                ai_name: document.getElementById("ainame").value,
+                language: document.getElementById("language").value,
+                source: document.getElementById("source").value
+            };
+
+            fetch("/ai", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }).then(function(res) {
+                if (res.ok) {
+                    return res.json();
+                }
+            }).then(function(data) {
+                if (data.code == 0) {
+                    alert("上传成功，等待编译！");
+                } else if (data.code == 1003) {
+                    location.replace("index.html");
+                } else {
+                    alert("错误[" + data.code + "]:" + data.msg);
+                }
+            })
+        }
+    </script>
 </body>
 </html>
