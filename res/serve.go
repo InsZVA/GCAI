@@ -6,7 +6,10 @@ import (
 	"log"
 	"strings"
 	"os"
+	"flag"
 )
+
+var staticPath = flag.String("sp", "", "Static File Path.")
 
 func getCurrentDirectory() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -18,8 +21,14 @@ func getCurrentDirectory() string {
 
 
 func init() {
-	staticDir := getCurrentDirectory()
-	staticDir += "/static"
-	log.Println("Static path:" + staticDir)
-	http.Handle("/", http.FileServer(http.Dir(staticDir)))
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+	if *staticPath == "" {
+		*staticPath = getCurrentDirectory()
+		*staticPath += "/static"
+	}
+
+	log.Println("Static path:" + *staticPath)
+	http.Handle("/", http.FileServer(http.Dir(*staticPath)))
 }

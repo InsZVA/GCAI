@@ -4,7 +4,7 @@ import (
 	"github.com/inszva/GCAI/httputil"
 )
 
-func NewAuthHandleFunc(level []int, serve func (map[string][]string)interface{}) func (map[string][]string)interface{} {
+func NewAuthHandleFunc(level []int, serve func (SessionValue, map[string][]string)interface{}) func (map[string][]string)interface{} {
 	return func (params map[string][]string) interface{} {
 		if tokens, ok := params["token"]; !ok {
 			return httputil.BadResponse(1003)
@@ -15,7 +15,7 @@ func NewAuthHandleFunc(level []int, serve func (map[string][]string)interface{})
 			}
 			for _, l := range level {
 				if l == session.level {
-					return serve(params)
+					return serve(session, params)
 				}
 			}
 			return httputil.BadResponse(1003)

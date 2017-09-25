@@ -1,0 +1,4 @@
+TestAI目录
+
+该目录按game_id数字的名字作为每个TestAI的程序执行文件，自动判断OS，windows为.exe，
+linux没有扩展名

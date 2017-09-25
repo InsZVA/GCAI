@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+
+    <style>
+        .fl {
+            float: left;
+        }
+
+        .clbt {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fl" style="width: 80%">
+        <h4 id="game_name"></h4>
+        <p id="description"></p>
+        <p>每步时间限制：<span id="time_limit"></span>ms</p>
+        <p>每步空间限制：<span id="space_limit"></span>MB</p>
+    </div>
+    <div class="fl" style="width: 20%">
+        <h4 id="username"></h4>
+        <h5> RANK:<span id="rank"></span></h5>
+        <h5>当前AI:<span id="currentai"></span></h5>
+        <ul>
+            <li><a href="aimanager.html?gid=">AI管理</a></li>
+        </ul>
+    </div>
+    <script>
+        if (localStorage.getItem("token") === null) {
+            location.replace("index.html")
+        }
+
+        function UrlSearch()
+        {
+            var name,value;
+            var str = location.href;
+            var num = str.indexOf("?");
+            str = str.substr(num+1);
+
+            var arr = str.split("&");
+            for(var i = 0;i < arr.length;i++){
+                num = arr[i].indexOf("=");
+                if(num > 0){
+                    name = arr[i].substring(0,num);
+                    value = arr[i].substr(num+1);
+                    this[name] = value;
+                }
+            }
+        }
+        var request = new UrlSearch();
+
+        fetch("/game?token=" + localStorage.getItem("token") + "&id=" + request.id, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function(res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function(data) {
+            if (data.code == 0) {
+                document.getElementById("game_name").innerHTML = data.body.game_name;
+                var description = JSON.parse(data.body.description);
+                var html = "";
+                for (var i = 0; i < description.length; i++) {
+                    if (description[i].type == "text") {
+                        html += "<p>" + description[i].value.replace(/\n/g, "<br/>") + "</p>\n"
+                    } else if (description[i].type == "img") {
+                        html += "<img src='" + description[i].value + "'>\n"
+                    }
+                }
+                document.getElementById("description").innerHTML = html;
+                document.getElementById("time_limit").innerHTML = data.body.time_limit;
+                document.getElementById("space_limit").innerHTML = data.body.space_limit;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            }
+        });
+
+        fetch("/user?token=" + localStorage.getItem("token") + "&gid=" + request.id, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function(res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function(data) {
+            if (data.code == 0) {
+                document.getElementById("username").innerHTML = data.body.username;
+                document.getElementById("rank").innerHTML = data.body.rank;
+                document.getElementById("currentai").innerHTML = data.body.current_ai_name;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            }
+        });
+    </script>
+</body>
+</html>

@@ -8,6 +8,8 @@ func init() {
 	codeToMessage[1002] = "username or password error"
 	codeToMessage[1003] = "permission denied"
 
+	codeToMessage[2001] = "game id error"
+
 	codeToMessage[9001] = "dbutil error"
 }
 

@@ -3,7 +3,6 @@ package user
 import (
 	"github.com/inszva/GCAI/httputil"
 	"net/http"
-	"log"
 	"github.com/inszva/GCAI/dbutil"
 )
 
@@ -51,5 +50,5 @@ func init() {
 		}
 	}
 
-	http.Handle("/login", &loginHandler)
+	http.Handle("/user/login", &loginHandler)
 }

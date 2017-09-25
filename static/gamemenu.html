@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>游戏菜单</title>
+</head>
+<body>
+    <ul id="gamelist">
+        <li><a href="#">猜和</a></li>
+    </ul>
+    <script>
+        if (localStorage.getItem("token") === null) {
+            location.replace("index.html")
+        }
+
+        fetch("/game?token=" + localStorage.getItem("token"), {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function(res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function(data) {
+            if (data.code == 0) {
+                var html = "\n";
+                for (var i = 0; i < data.body.length; i++) {
+                    html += "<li><a href='game.html?id=" + data.body[i].game_id + "'>"
+                        + data.body[i].game_name +"</a></li>\n"
+                }
+                document.getElementById("gamelist").innerHTML = html;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            }
+        })
+    </script>
+</body>
+</html>
