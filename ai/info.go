@@ -35,5 +35,6 @@ func GetAIInfo(id int) (InfoBody, error) {
 		rows.Scan(&info.UserId, &info.AIId, &info.AIName, &info.GameId, &info.ExePath, &info.Language, &info.Source, &info.State, &info.UpdateTime)
 		return info, nil
 	}
+	rows.Close()
 	return info, nil
 }

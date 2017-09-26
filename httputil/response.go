@@ -14,6 +14,7 @@ func init() {
 	codeToMessage[3002] = "an ai is compiling"
 	codeToMessage[3003] = "ai detail missing"
 
+	codeToMessage[9002] = "server task queue is full"
 	codeToMessage[9001] = "dbutil error"
 }
 

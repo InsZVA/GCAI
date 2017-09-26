@@ -2,6 +2,7 @@ package ai
 
 import (
 	"log"
+	"errors"
 )
 type Task struct {
 	Language string
@@ -27,6 +28,11 @@ func init() {
 	defaultWorker.Start()
 }
 
-func AddTask(task *Task) {
-	defaultWorker.tasks <- task
+func AddTask(task *Task) error {
+	select {
+	case defaultWorker.tasks <- task:
+		return nil
+	default:
+		return errors.New("task queue full")
+	}
 }

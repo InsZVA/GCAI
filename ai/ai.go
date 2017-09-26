@@ -137,41 +137,52 @@ func init() {
 				return  httputil.BadResponse(3002)
 			}
 		}
+		rows.Close()
 
-		_, err = tx.Exec("INSERT INTO ai(ai_name, user_id, game_id, `language`, `source`, `state`, `update_time`) VALUES (?,?,?,?,?,?,?)",
-			info.AIName, userId, info.GameId, info.Language, info.Source, 0, info.UpdateTime)
+		stmt, err := tx.Prepare("INSERT INTO ai(ai_name, user_id, game_id, `language`, `source`, `state`, `update_time`) VALUES (?,?,?,?,?,?,?)")
 		if err != nil {
 			tx.Rollback()
 			return httputil.BadResponse(9001)
 		}
+		_, err = stmt.Exec(info.AIName, userId, info.GameId, info.Language, info.Source, 0, info.UpdateTime)
+		if err != nil {
+			tx.Rollback()
+			return httputil.BadResponse(9001)
+		}
+		stmt.Close()
+
 		rows, err = tx.Query("SELECT LAST_INSERT_ID()")
 		if err != nil {
 			tx.Rollback()
 			return httputil.BadResponse(9001)
 		}
-		tx.Commit()
-
 		if rows.Next() {
 			rows.Scan(&info.AIId)
-			id := info.AIId
-			AddTask(&Task{
-				Language: info.Language,
-				Source: info.Source,
-				Callback: func(success bool, msg string) {
-					db, err := dbutil.Open()
-					if err != nil {
-						return
-					}
-					if success {
-						db.Exec("UPDATE ai SET state=1, exe_path=? WHERE ai_id=?", msg, id)
-					} else {
-						db.Exec("UPDATE ai SET state=2, exe_path=? WHERE ai_id=?", msg, id)
-					}
-					// TODO: notify to frontend
-				},
-			})
 		}
-		return httputil.OKResponse()
+		rows.Close()
+		tx.Commit()
+
+		id := info.AIId
+		if AddTask(&Task{
+			Language: info.Language,
+			Source: info.Source,
+			Callback: func(success bool, msg string) {
+				db, err := dbutil.Open()
+				if err != nil {
+					return
+				}
+				if success {
+					db.Exec("UPDATE ai SET state=1, exe_path=? WHERE ai_id=?", msg, id)
+				} else {
+					db.Exec("UPDATE ai SET state=2, exe_path=? WHERE ai_id=?", msg, id)
+				}
+				// TODO: notify to frontend
+			},
+		}) == nil {
+			return httputil.OKResponse()
+		} else {
+			return httputil.BadResponse(9002)
+		}
 	})
 
 	http.Handle("/ai", &aiHandler)
