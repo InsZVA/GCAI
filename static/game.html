@@ -27,7 +27,11 @@
         <h5> RANK:<span id="rank"></span></h5>
         <h5>当前AI:<span id="currentai"></span></h5>
         <ul>
+            <li><a id="game" href="game.html?id=">游戏说明</a></li>
             <li><a id="aimanager" href="aimanager.html?gid=">AI管理</a></li>
+            <li><a id="racemanager" href="racemanager.html?gid=&cmd=my">我的PK</a></li>
+            <li><a id="recentrace" href="racemanager.html?gid=&cmd=recent">最近PK</a></li>
+            <li><a id="ranklist" href="ranklist.html?gid=">排行榜</a></li>
         </ul>
     </div>
     <script>
@@ -54,7 +58,11 @@
         }
         var request = new UrlSearch();
 
+        document.getElementById("game").href = "game.html?id=" + request.id;
         document.getElementById("aimanager").href = "aimanager.html?gid=" + request.id;
+        document.getElementById("racemanager").href = "racemanager.html?gid=" + request.id + "&cmd=my";
+        document.getElementById("recentrace").href = "racemanager.html?gid=" + request.id + "&cmd=recent";
+        document.getElementById("ranklist").href = "ranklist.html?gid=" + request.id;
 
         fetch("/game?token=" + localStorage.getItem("token") + "&id=" + request.id, {
             method: "GET",

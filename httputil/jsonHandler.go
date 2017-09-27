@@ -3,6 +3,7 @@ package httputil
 import (
 	"net/http"
 	"encoding/json"
+	"strconv"
 )
 
 type JsonHandler struct {
@@ -48,6 +49,8 @@ func (jsonHandler *JsonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 					}
 				}
 				requestParams[k] = values
+			case float64:
+				requestParams[k] = []string{strconv.FormatFloat(v.(float64), 'f', -1, 64)}
 			default:
 				w.WriteHeader(400)
 				return

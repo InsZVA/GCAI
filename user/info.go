@@ -105,8 +105,7 @@ func init() {
 				},
 			}
 		} else {
-			// New user_game
-			db.Exec("INSERT INTO user_game(user_id, game_id, rank, current_ai_id) VALUES (?,?,?,?)", userId, gid, 0, 0)
+			EnsureUserGame(userId, gid)
 			return InfoResponse{
 				JsonResponse: httputil.JsonResponse {
 					Code: 0,

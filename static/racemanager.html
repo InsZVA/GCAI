@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AI管理</title>
+    <title>PK列表</title>
 
     <style>
         .fl {
@@ -16,18 +16,11 @@
 </head>
 <body>
     <div class="fl" style="width: 80%">
-        <ul id="ailist">
+        <ul id="racelist">
             <li></li>
         </ul>
 
-        <h4>新建AI</h4>
-        <p><input id="ainame" placeholder="AI名"></p>
-        <p><select id="language">
-            <option value="go">Go</option>
-            <option value="cpp">C/C++</option>
-        </select></p>
-        <p><textarea id="source"></textarea></p>
-        <p><span href="#" onclick="newAI()">新建</span></p>
+        <p><span onclick="prev()">上一页</span> <span id="page">0/0</span> <span onclick="next()">下一页</span> </p>
     </div>
     <div class="fl" style="width: 20%">
         <h4 id="username"></h4>
@@ -72,46 +65,6 @@
         document.getElementById("recentrace").href = "racemanager.html?gid=" + request.gid + "&cmd=recent";
         document.getElementById("ranklist").href = "ranklist.html?gid=" + request.gid;
 
-        fetch("/ai?token=" + localStorage.getItem("token") + "&gid=" + request.gid, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        }).then(function(res) {
-            if (res.ok) {
-                return res.json();
-            }
-        }).then(function(data) {
-            if (data.code == 0) {
-                var html = "\n";
-                for (var i = 0; i < data.body.length; i++) {
-                    html += "<li>";
-                    html += data.body[i].ai_name + "&nbsp;";
-                    switch (data.body[i].state) {
-                        case 0:
-                            html += "正在创建"; break;
-                        case 1:
-                            html += "就绪"; break;
-                        case 2:
-                            html += "编译失败";
-                    }
-                    html += "&nbsp;" + data.body[i].language;
-                    var date = new Date();
-                    date.setTime(data.body[i].update_time * 1000);
-                    html += "&nbsp;" + date.toDateString();
-                    if (data.body[i].state == 1) {
-                        html += "<span onclick='setcur(" + data.body[i].ai_id + ")'>设置为当前AI</span>";
-                    }
-                    html += "</li>\n";
-                }
-                document.getElementById("ailist").innerHTML = html;
-            } else if (data.code == 1003) {
-                location.replace("index.html")
-            } else {
-                alert("错误[" + data.code + "]:" + data.msg);
-            }
-        });
-
         fetch("/user?token=" + localStorage.getItem("token") + "&gid=" + request.gid, {
             method: "GET",
             headers: {
@@ -133,56 +86,89 @@
             }
         });
 
-        function newAI() {
-            var data = {
-                token: localStorage.getItem("token"),
-                game_id: request.gid,
-                ai_name: document.getElementById("ainame").value,
-                language: document.getElementById("language").value,
-                source: document.getElementById("source").value
-            };
+        var curPage = 1, totalPage;
+        fetch("/race/count?token=" + localStorage.getItem("token") + "&gid=" + request.gid + "&cmd=" + request.cmd, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function (res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function(data) {
+            if (data.code == 0) {
+                totalPage = parseInt(data.body / 30);
+                if (data.body % 30 != 0) totalPage++;
+                document.getElementById("page").innerHTML = curPage + "/" + totalPage;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
+            }
+        });
 
-            fetch("/ai", {
-                method: "POST",
+        function getRange(offset, limit) {
+            if (limit == undefined) {
+                limit = 30;
+            }
+            fetch("/race?token=" + localStorage.getItem("token") + "&gid=" + request.gid + "&cmd=" + request.cmd +
+                "&offset=" + offset + "&limit=" + limit, {
+                method: "GET",
                 headers: {
                     "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }).then(function(res) {
+                }
+            }).then(function (res) {
                 if (res.ok) {
                     return res.json();
                 }
-            }).then(function(data) {
+            }).then(function (data) {
                 if (data.code == 0) {
-                    alert("上传成功，等待编译！");
+                    var html = "\n";
+                    for (var i = 0; i < data.body.length; i++) {
+                        html += "<li>";
+                        html += data.body[i].ai1_user_name + "(rank: " + data.body[i].ai1_user_rank;
+                        html += " ai: " + data.body[i].ai1_name + ") 挑战";
+                        html += data.body[i].ai2_user_name + "(rank: " + data.body[i].ai2_user_rank;
+                        html += " ai: " + data.body[i].ai2_name + ") ";
+                        if (data.body[i].state == 0) html += "新建";
+                        else if (data.body[i].state == 1) html += "正在对战";
+                        else if (data.body[i].state == 2) html += "成功";
+                        else if (data.body[i].state == 3) html += "失败";
+                        else if (data.body[i].state == 4) html += "平局";
+                        else html += "异常";
+                        var date = new Date();
+                        date.setTime(data.body[i].update_time * 1000);
+                        html += " " + date.toDateString();
+                        if (data.body[i].state > 1)
+                            html += " <a target='_blank' href='/game/" + data.body[i].game_id + "/watch.html?id=" + data.body[i].race_id + "'>观战</a>";
+                        html += "</li>\n";
+                    }
+                    document.getElementById("racelist").innerHTML = html;
                 } else if (data.code == 1003) {
-                    location.replace("index.html");
+                    location.replace("index.html")
                 } else {
                     alert("错误[" + data.code + "]:" + data.msg);
                 }
             })
         }
 
-        function setcur(id) {
-            fetch("/ai/cur", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({token: localStorage.getItem("token"), game_id: request.gid, ai_id: id})
-            }).then(function(res) {
-                if (res.ok) {
-                    return res.json();
-                }
-            }).then(function(data) {
-                if (data.code == 0) {
-                    location.reload();
-                }else if (data.code == 1003) {
-                    location.replace("index.html");
-                } else {
-                    alert("错误[" + data.code + "]:" + data.msg);
-                }
-            })
+        getRange(0);
+
+        function prev() {
+            if (curPage < 2) return;
+            curPage--;
+            var offset = (curPage - 1) * 30;
+            getRange(offset);
+            document.getElementById("page").nnerHTML = curPage + "/" + totalPage;
+        }
+
+        function next() {
+            if (curPage >= totalPage) return;
+            curPage++;
+            var offset = (curPage - 1) * 30;
+            getRange(offset);
+            document.getElementById("page").nnerHTML = curPage + "/" + totalPage;
         }
     </script>
 </body>

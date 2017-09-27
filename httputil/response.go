@@ -13,6 +13,11 @@ func init() {
 	codeToMessage[3001] = "ai id error"
 	codeToMessage[3002] = "an ai is compiling"
 	codeToMessage[3003] = "ai detail missing"
+	codeToMessage[3004] = "ai state error"
+
+	codeToMessage[4001] = "cmd error"
+	codeToMessage[4002] = "offset error"
+	codeToMessage[4003] = "limit error"
 
 	codeToMessage[9002] = "server task queue is full"
 	codeToMessage[9001] = "dbutil error"

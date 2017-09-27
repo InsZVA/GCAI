@@ -46,6 +46,7 @@ func (judge *Judge) Work() {
 		cmdJudge.Stderr = stderrJudge
 		cmdJudge.Start()
 
+		// TODO: 解释性语言的处理
 		cmdAI1 := exec.Command(task.AI1Path)
 		cmdAI2 := exec.Command(task.AI2Path)
 

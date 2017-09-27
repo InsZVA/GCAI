@@ -19,7 +19,6 @@ func getCurrentDirectory() string {
 	return strings.Replace(dir, "\\", "/", -1)
 }
 
-
 func init() {
 	if !flag.Parsed() {
 		flag.Parse()
