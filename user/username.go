@@ -18,7 +18,7 @@ func init() {
 	}
 }
 
-func getUsername(id int) (string, error) {
+func GetUsername(id int) (string, error) {
 	var username string
 	value, ok := cache.Get(id)
 	if !ok {

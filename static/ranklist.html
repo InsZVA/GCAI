@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>排行榜</title>
+
+    <style>
+        .fl {
+            float: left;
+        }
+
+        .clbt {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <div class="fl" style="width: 80%">
+        <ul id="list">
+            <li></li>
+        </ul>
+
+        <p><span onclick="prev()">上一页</span> <span id="page">0/0</span> <span onclick="next()">下一页</span> </p>
+    </div>
+    <div class="fl" style="width: 20%">
+        <h4 id="username"></h4>
+        <h5> RANK:<span id="rank"></span></h5>
+        <h5>当前AI:<span id="currentai"></span></h5>
+        <ul>
+            <li><a id="game" href="game.html?id=">游戏说明</a></li>
+            <li><a id="aimanager" href="aimanager.html?gid=">AI管理</a></li>
+            <li><a id="racemanager" href="racemanager.html?gid=&cmd=my">我的PK</a></li>
+            <li><a id="recentrace" href="racemanager.html?gid=&cmd=recent">最近PK</a></li>
+            <li><a id="ranklist" href="ranklist.html?gid=">排行榜</a></li>
+        </ul>
+    </div>
+
+    <script>
+        if (localStorage.getItem("token") === null) {
+            location.replace("index.html")
+        }
+
+        function UrlSearch()
+        {
+            var name,value;
+            var str = location.href;
+            var num = str.indexOf("?");
+            str = str.substr(num+1);
+
+            var arr = str.split("&");
+            for(var i = 0;i < arr.length;i++){
+                num = arr[i].indexOf("=");
+                if(num > 0){
+                    name = arr[i].substring(0,num);
+                    value = arr[i].substr(num+1);
+                    this[name] = value;
+                }
+            }
+        }
+        var request = new UrlSearch();
+
+        document.getElementById("game").href = "game.html?id=" + request.gid;
+        document.getElementById("aimanager").href = "aimanager.html?gid=" + request.gid;
+        document.getElementById("racemanager").href = "racemanager.html?gid=" + request.gid + "&cmd=my";
+        document.getElementById("recentrace").href = "racemanager.html?gid=" + request.gid + "&cmd=recent";
+        document.getElementById("ranklist").href = "ranklist.html?gid=" + request.gid;
+
+        fetch("/user?token=" + localStorage.getItem("token") + "&gid=" + request.gid, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function(res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function(data) {
+            if (data.code == 0) {
+                document.getElementById("username").innerHTML = data.body.username;
+                document.getElementById("rank").innerHTML = data.body.rank;
+                document.getElementById("currentai").innerHTML = data.body.current_ai_name;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
+            }
+        });
+
+        var curPage = 1, totalPage;
+        fetch("/rank/count?token=" + localStorage.getItem("token") + "&gid=" + request.gid, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function (res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function(data) {
+            if (data.code == 0) {
+                totalPage = parseInt(data.body / 30);
+                if (data.body % 30 != 0) totalPage++;
+                document.getElementById("page").innerHTML = curPage + "/" + totalPage;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
+            }
+        });
+
+        function getRange(offset, limit) {
+            if (limit == undefined) {
+                limit = 30;
+            }
+            fetch("/rank?token=" + localStorage.getItem("token") + "&gid=" + request.gid +
+                "&offset=" + offset + "&limit=" + limit, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(function (res) {
+                if (res.ok) {
+                    return res.json();
+                }
+            }).then(function (data) {
+                if (data.code == 0) {
+                    var html = "\n";
+                    for (var i = 0; i < data.body.length; i++) {
+                        html += "<li>";
+                        html += data.body[i].username;
+                        html += " " + data.body[i].rank;
+                        html += "</li>\n";
+                    }
+                    document.getElementById("list").innerHTML = html;
+                } else if (data.code == 1003) {
+                    location.replace("index.html")
+                } else {
+                    alert("错误[" + data.code + "]:" + data.msg);
+                }
+            })
+        }
+
+        getRange(0);
+
+        function prev() {
+            if (curPage < 2) return;
+            curPage--;
+            var offset = (curPage - 1) * 30;
+            getRange(offset);
+            document.getElementById("page").nnerHTML = curPage + "/" + totalPage;
+        }
+
+        function next() {
+            if (curPage >= totalPage) return;
+            curPage++;
+            var offset = (curPage - 1) * 30;
+            getRange(offset);
+            document.getElementById("page").nnerHTML = curPage + "/" + totalPage;
+        }
+    </script>
+</body>
+</html>

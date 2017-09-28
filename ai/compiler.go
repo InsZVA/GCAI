@@ -7,6 +7,7 @@ import (
 type Task struct {
 	Language string
 	Source string
+	Started func()
 	// success msg is exe path
 	Callback func(success bool, msg string)
 	Canceled bool

@@ -72,7 +72,7 @@ func init() {
 			return httputil.BadResponse(2001)
 		}
 
-		username, err := getUsername(userId)
+		username, err := GetUsername(userId)
 		if err != nil || username == "" {
 			return httputil.BadResponse(9001)
 		}

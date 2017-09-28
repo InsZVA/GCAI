@@ -21,6 +21,9 @@
         <p id="description"></p>
         <p>每步时间限制：<span id="time_limit"></span>ms</p>
         <p>每步空间限制：<span id="space_limit"></span>MB</p>
+        <p>选择AI：<select id="ai">
+
+        </select> 挑战对手： <input id="enemy"><span onclick="pk()">挑战</span> </p>
     </div>
     <div class="fl" style="width: 20%">
         <h4 id="username"></h4>
@@ -115,6 +118,58 @@
                 alert("错误[" + data.code + "]:" + data.msg);
             }
         });
+
+        fetch("/ai/available?token=" + localStorage.getItem("token"), {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function(res) {
+            if (res.ok) {
+                return res.json();
+            }
+        }).then(function (data) {
+            if (data.code == 0) {
+                var html = "\n";
+                for (var i = 0; i < data.body.length; i++) {
+                    html += "<option value='" + data.body[i].ai_id + "'>" + data.body[i].ai_name + "</option>\n"
+                }
+                document.getElementById("ai").innerHTML = html;
+            } else if (data.code == 1003) {
+                location.replace("index.html")
+            } else {
+                alert("错误[" + data.code + "]:" + data.msg);
+            }
+        });
+
+        function pk() {
+            var data = {
+                ai_id: parseInt(document.getElementById("ai").value),
+                username: document.getElementById("enemy").value,
+                token: localStorage.getItem("token")
+            };
+
+            fetch("/race", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            }).then(function(res) {
+                if (res.ok) {
+                    return res.json();
+                }
+            }).then(function(data) {
+                if (data.code == 0) {
+                    alert("挑战成功，等待评测！");
+                    location.replace("racemanager.html?gid=" + request.id + "&cmd=recent");
+                } else if (data.code == 1003) {
+                    location.replace("index.html")
+                } else {
+                    alert("错误[" + data.code + "]:" + data.msg);
+                }
+            })
+        }
     </script>
 </body>
 </html>

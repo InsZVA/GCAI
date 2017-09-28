@@ -7,6 +7,7 @@ import (
 	_"github.com/inszva/GCAI/game"
 	_"github.com/inszva/GCAI/ai"
 	_"github.com/inszva/GCAI/race"
+	_"github.com/inszva/GCAI/rank"
 )
 
 func main() {

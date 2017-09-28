@@ -7,6 +7,9 @@ import (
 	"github.com/inszva/GCAI/dbutil"
 	"database/sql"
 	"net/http"
+	"github.com/inszva/GCAI/ai"
+	"time"
+	"github.com/inszva/GCAI/rank"
 )
 
 type Item struct {
@@ -118,7 +121,123 @@ func init() {
 		}
 	})
 
+	raceHandler.Serve["POST"] = user.NewAuthHandleFunc([]int{0}, func(session user.SessionValue, params map[string][]string) interface{} {
+		user1Id := session.UserId
+		ai1ids, ok := params["ai_id"]
+		if !ok {
+			return httputil.BadResponse(3001)
+		}
+		ai1id, err := strconv.Atoi(ai1ids[0])
+		if err != nil {
+			return httputil.BadResponse(3001)
+		}
 
+		user2names, ok := params["username"]
+		if !ok {
+			return httputil.BadResponse(5001)
+		}
+		user2name := user2names[0]
+
+		ai1info, err := ai.GetAIInfo(ai1id)
+		if err != nil {
+			return httputil.BadResponse(9001)
+		}
+		if ai1info.UserId != user1Id {
+			return httputil.BadResponse(9003)
+		}
+
+		db, err := dbutil.Open()
+		if err != nil {
+			return httputil.BadResponse(9001)
+		}
+		rows, err := db.Query("SELECT `user_id` FROM `user` WHERE `username`=?", user2name)
+		if err != nil {
+			return httputil.BadResponse(9001)
+		}
+		var user2id int
+		var ai2id int
+		if rows.Next() {
+			rows.Scan(&user2id)
+			rows, err := db.Query("SELECT `current_ai_id` FROM `user_game` WHERE user_id=? AND game_id=?", user2id, ai1info.GameId)
+			if err != nil || !rows.Next() {
+				return httputil.BadResponse(5003)
+			}
+			rows.Scan(&ai2id)
+		} else {
+			return httputil.BadResponse(5002)
+		}
+		rows.Close()
+
+		ai2info, err := ai.GetAIInfo(ai2id)
+		if err != nil {
+			return httputil.BadResponse(9001)
+		}
+
+		var raceId int
+		tx, err := db.Begin()
+		if err != nil {
+			return httputil.BadResponse(9001)
+		}
+		timestamp := time.Now().Unix()
+		stmt, err := tx.Prepare("INSERT INTO race(game_id, ai1_id, ai2_id, state, update_time) VALUES(?,?,?,?,?)")
+		if err != nil {
+			tx.Rollback()
+			return httputil.BadResponse(9001)
+		}
+		_, err = stmt.Exec(ai1info.GameId, ai1id, ai2id, 0, timestamp)
+		if err != nil {
+			tx.Rollback()
+			return httputil.BadResponse(9001)
+		}
+		stmt.Close()
+		rows, err = tx.Query("SELECT LAST_INSERT_ID()")
+		if err != nil {
+			tx.Rollback()
+			return httputil.BadResponse(9001)
+		}
+		if rows.Next() {
+			rows.Scan(&raceId)
+		}
+		rows.Close()
+		tx.Commit()
+
+		if AddTask(&Task{
+			GameId: ai1info.GameId,
+			AI1Path: ai1info.ExePath,
+			AI2Path: ai2info.ExePath,
+			Started: func() {
+				timestamp := time.Now().Unix()
+				db, err := dbutil.Open()
+				if err != nil {
+					return
+				}
+				db.Exec("UPDATE `race` SET `state`=?, update_time=? WHERE race_id=?", 1, timestamp, raceId)
+			},
+			Callback: func(result int) {
+				var state int
+				timestamp := time.Now().Unix()
+				switch result {
+				case 0:
+					state = 4
+				case 1:
+					state = 2
+				case 2:
+					state = 3
+				}
+
+				db, err := dbutil.Open()
+				if err != nil {
+					return
+				}
+				rank.UpdateRank(user1Id, user2id, ai1info.GameId, result)
+				db.Exec("UPDATE `race` SET `state`=?, update_time=? WHERE race_id=?", state, timestamp, raceId)
+			},
+		}) == nil {
+			return httputil.OKResponse()
+		} else {
+			return httputil.BadResponse(9002)
+		}
+	})
 
 	http.Handle("/race", &raceHandler)
 }

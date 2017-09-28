@@ -19,8 +19,13 @@ func init() {
 	codeToMessage[4002] = "offset error"
 	codeToMessage[4003] = "limit error"
 
+	codeToMessage[5001] = "enemy username error"
+	codeToMessage[5002] = "username doesn't exist"
+	codeToMessage[5003] = "enemy user did not set current ai"
+
 	codeToMessage[9002] = "server task queue is full"
 	codeToMessage[9001] = "dbutil error"
+	codeToMessage[9003] = "permission denied"
 }
 
 type JsonResponse struct {

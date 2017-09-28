@@ -14,6 +14,7 @@ type Task struct {
 	GameId int
 	AI1Path string
 	AI2Path string
+	Started func()
 	// 0-draw 1-ai1win 2-ai2win 3-error
 	Callback func(result int)
 }
@@ -24,6 +25,10 @@ type Judge struct {
 
 func (judge *Judge) Work() {
 	for task := range judge.tasks {
+		if task.Started != nil {
+			task.Started()
+		}
+
 		gameInfo, err := GetGameInfo(task.GameId)
 		if err != nil {
 			task.Callback(3)

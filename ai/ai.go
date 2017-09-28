@@ -68,7 +68,7 @@ func init() {
 		if err != nil {
 			return httputil.BadResponse(9001)
 		}
-		rows, err := db.Query("SELECT ai_id, ai_name, `language`, state, update_time FROM ai WHERE user_id=? AND game_id=?", userId, gid)
+		rows, err := db.Query("SELECT ai_id, ai_name, `language`, state, update_time FROM ai WHERE user_id=? AND game_id=? ORDER BY update_time DESC", userId, gid)
 		if err != nil {
 			return httputil.BadResponse(9001)
 		}
@@ -171,10 +171,11 @@ func init() {
 				if err != nil {
 					return
 				}
+				timestamp := time.Now().Unix()
 				if success {
-					db.Exec("UPDATE ai SET state=1, exe_path=? WHERE ai_id=?", msg, id)
+					db.Exec("UPDATE ai SET state=1, exe_path=?, update_time=? WHERE ai_id=?", msg, timestamp, id)
 				} else {
-					db.Exec("UPDATE ai SET state=2, exe_path=? WHERE ai_id=?", msg, id)
+					db.Exec("UPDATE ai SET state=2, exe_path=?, update_time=? WHERE ai_id=?", msg, timestamp, id)
 				}
 				// TODO: notify to frontend
 			},

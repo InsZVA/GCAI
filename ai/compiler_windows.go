@@ -14,6 +14,10 @@ var assertPath = "C:/Go/path/src/github.com/inszva/GCAI/assert/ai"
 
 func (worker *Worker) work() {
 	for task := range worker.tasks {
+		if task.Started != nil {
+			task.Started()
+		}
+
 		fname := uuid.NewV4().String()
 		switch task.Language {
 		case "go":
